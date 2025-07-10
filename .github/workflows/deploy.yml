@@ -97,11 +97,26 @@ jobs:
           --metadata-from-file startup-script=./startup-script.sh \
           --metadata instance-name=$INSTANCE_NAME,deployment-time=$(date -u +"%Y-%m-%dT%H:%M:%SZ"),github-actor=${{ github.actor }}
 
-    - name: Execute startup script on instance
+    - name: ⏳ Wait for instance to be ready
       run: |
-        echo "Ejecutando script de instalación..."
-        gcloud compute ssh $INSTANCE_NAME  --zone=$zone  --command="sudo bash ~/startup-script.sh"
+        INSTANCE_NAME="${{ steps.generate_name.outputs.INSTANCE_NAME }}"
+        echo "⏳ Esperando que la instancia esté lista..."
         
+        # Esperar hasta que la instancia esté corriendo
+        for i in {1..30}; do
+          STATUS=$(gcloud compute instances describe $INSTANCE_NAME --zone=${{ github.event.inputs.zone }} --format="get(status)")
+          if [ "$STATUS" = "RUNNING" ]; then
+            echo "✅ Instancia está corriendo"
+            break
+          fi
+          echo "⏳ Esperando... ($i/30) Estado actual: $STATUS"
+          sleep 10
+        done
+        
+        # Esperar un poco más para que los servicios se inicien
+        echo "⏳ Esperando que los servicios se inicien..."
+        sleep 30
+
     - name: 🔥 Create firewall rules
       run: |
         # Regla para Odoo (puerto 8069)
