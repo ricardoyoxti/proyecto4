@@ -100,7 +100,7 @@ jobs:
     - name: Execute startup script on instance
       run: |
         echo "Ejecutando script de instalación..."
-        gcloud compute ssh ${{ INSTANCE_NAME }} --zone=${{ zone }} --command="sudo bash ~/startup-script.sh"
+        gcloud compute ssh $INSTANCE_NAME  --zone=$zone  --command="sudo bash ~/startup-script.sh"
         
     - name: 🔥 Create firewall rules
       run: |
